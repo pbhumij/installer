@@ -1,0 +1,568 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
+     xmlns:fire="http://schemas.microsoft.com/wix/FirewallExtension"
+     xmlns:netfx="http://schemas.microsoft.com/wix/NetFxExtension"
+     xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
+  <Product Id="b17211b4-efc6-4d30-ae79-50e117aa31ad"
+           Name="OStor Desktop 0.1 "
+           Language="1033"
+           Version="0.1.0.0"
+           Manufacturer="Ziroh Labs"
+           UpgradeCode="1d001da0-508b-4af9-b982-9e0171676a56">
+    <Package Id="79854ed1-92c9-4682-bcaf-5e0403ca8f7a"
+             Platform="x64"
+             InstallerVersion="301"
+             Compressed="yes"
+             InstallPrivileges="elevated"
+             AdminImage="yes"
+             InstallScope="perMachine" />
+    <Icon Id="InstallerIcon.ico" SourceFile="C:\pranjal\Binaries\Ziroh\OStor\media\48x48_nsz_icon.ico"/>
+    <Property Id="ARPPRODUCTICON" Value="InstallerIcon.ico" />
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+    <MediaTemplate EmbedCab="yes"/>
+
+    <!-- Interface type -->
+    <Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER" />
+    <UIRef Id="WixUI_InstallDir" />
+    <UIRef Id="WixUI_ErrorProgressText" />
+
+    <!-- Icon For Installer -->
+    <Icon Id="ostor.exe" SourceFile="C:\pranjal\Binaries\Ziroh\OStor\media\OStor_icon.ico" />
+    <Icon Id="OStorSecureConnect.exe" SourceFile="C:\pranjal\Binaries\Ziroh\OStor\media\OStorSecureConnect_icon.ico" />
+    <WixVariable Id="WixUIBannerBmp" Value="C:\pranjal\Binaries\Ziroh\OStor\media\banner.png" />
+    <WixVariable Id="WixUIDialogBmp" Value="C:\pranjal\Binaries\Ziroh\OStor\media\splash.png" />
+    <WixVariable Id="WixUILicenseRtf" Value="C:\pranjal\Binaries\Ziroh\OStor\media\eula.rtf" />
+    <UI>
+      <Publish Dialog="ExitDialog"
+            Control="Finish"
+            Event="DoAction"
+            Value="LaunchClient">WIXUI_EXITDIALOGOPTIONALCHECKBOX = 1 and NOT Installed</Publish>
+
+      <TextStyle Id="WixUI_Font_Desc" FaceName="Tahoma" Size="8" Red="255" Green="255" Blue="255" />
+      <TextStyle Id="WixUI_Font_BiggerCustom" FaceName="Tahoma" Size="12" Red="255" Green="255" Blue="255" />
+      <TextStyle Id="WixUI_Font_TitleCustom" FaceName="Tahoma" Size="9" Bold="yes" Red="255" Green="255" Blue="255" />
+    </UI>
+
+    <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOX" Value="1"/>
+    <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOXTEXT" Value="Launch OStor Secure Connect (Mandatory Step)" />
+    <Property Id="WixShellExecTarget" Value="[#OStorSecureConnect.exe]" />
+
+    <CustomAction Id="LaunchClient"
+        BinaryKey="WixCA"
+        DllEntry="WixShellExec"
+        Impersonate="yes" />
+
+
+    <!-- .Net Framework Prerequisite Check -->
+    <PropertyRef Id="WIX_IS_NETFRAMEWORK_461_OR_LATER_INSTALLED" />
+    <Condition Message="This application requires .Net Framework 4.6.1 or later. Please Install the .Net Framework then run this installer again.">
+      <![CDATA[Installed OR WIX_IS_NETFRAMEWORK_461_OR_LATER_INSTALLED]]>
+    </Condition>
+
+    <Property Id="MSIUSEREALADMINDETECTION" Value="1" />
+
+    <!--<Property Id="ASSISTANCE_START_VIA_REGISTRY">1</Property>-->
+
+    <Feature Id="ProductFeature" Title="Ostor_Installer" Level="1">
+      <ComponentGroupRef Id="Binaries" />
+      <ComponentGroupRef Id="OStorUI" />
+      <ComponentGroupRef Id="UIresources" />
+      <ComponentRef Id="RemoveOstorDirFromProgramMenu"/>
+      <ComponentRef Id="RemoveOstorFromProgramFiles"/>
+    </Feature>
+    <Feature Id="VCRedist" Title="Visual C++ 8.0 Runtime" AllowAdvertise="no" Display="hidden" Level="1">
+      <MergeRef Id="VCRedist"/>
+    </Feature>
+  </Product>
+
+  <Fragment>
+    <!--Directories-->
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Merge Id="VCRedist" SourceFile="C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Redist\MSVC\14.12.25810\MergeModules\Microsoft_VC141_CRT_x64.msm" DiskId="1" Language="0"/>
+      <Directory Id="ProgramFiles64Folder">
+        <Directory Id="INSTALLFOLDER" Name ="Ziroh">
+          <Component Id="RemoveOstorFromProgramFiles" Guid="774fe573-6e97-4ee2-95ee-2cda80b5f6e0" Win64='yes'>
+            <RemoveFolder Id='INSTALLFOLDER' On='uninstall' />
+            <RegistryValue Root='HKCU' Key='Software\ZirohLabsProgramFiles\Ostor' Type='string' Value='' KeyPath='yes' />
+          </Component>
+          <Directory Id="OStor" Name ="OStor">
+            <Directory Id="OStorUI" Name="OStorUI">
+              <Directory Id="Resources" Name="resources"/>
+            </Directory>
+            <Directory Id="Service" Name="Service"></Directory>
+          </Directory>
+        </Directory>
+      </Directory>
+
+      <!--Start Menu-->
+      <Directory Id="ProgramMenuFolder" Name="Programs">
+        <Directory Id="OstorProgramMenuDir" Name="Ostor">
+          <Component Id="RemoveOstorDirFromProgramMenu" Guid="1df5ae65-fc79-4c9a-a0f3-795566313e15">
+            <RemoveFolder Id='OstorProgramMenuDir' On='uninstall' />
+            <RegistryValue Root='HKCU' Key='Software\ZirohLabs\Ostor' Type='string' Value='' KeyPath='yes' />
+          </Component>
+        </Directory>
+      </Directory>
+
+      <!--Desktop-->
+      <Directory Id="DesktopFolder" Name="Desktop" />
+      <!--StartUp Folder-->
+      <Directory Id="StartupFolder" Name="StartUp" />
+    </Directory>
+
+  </Fragment>
+
+  <Fragment>
+    <ComponentGroup Id="Binaries" Directory="Service">
+      <Component Id="OStorSecureConnect.exe" Guid="d1a2afea-3119-474b-ad09-6b0eab9e0770" Win64='yes'>
+        <File Id="OStorSecureConnect.exe" Name="OStorSecureConnect.exe" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64">
+          <util:PermissionEx User="Everyone" GenericAll="yes" />
+          <!--<fire:FirewallException Id="FWX2" Name="OstorDeviceServices">
+          <fire:RemoteAddress>127.0.0.1</fire:RemoteAddress>
+          <fire:RemoteAddress>127.0.0.2</fire:RemoteAddress>
+          <fire:RemoteAddress>127.0.0.3</fire:RemoteAddress>
+        </fire:FirewallException> -->
+          <Shortcut Id="OStorSecureConnectStartupShortcut" Directory="StartupFolder" Name="OStor Secure Connect"
+           WorkingDirectory='Service' Icon="OStorSecureConnect.exe" IconIndex="0" Advertise="yes" />
+          <Shortcut Id="OStorSecureProgramMenuShortcut" Directory="OstorProgramMenuDir" Name="OStor Secure Connect"
+             WorkingDirectory='Service' Icon="OStorSecureConnect.exe" IconIndex="0" Advertise="yes" />
+        </File>
+        <!-- <ServiceInstall
+            Id="OstorClientService"
+            Type="ownProcess"
+            Vital="yes"
+            Name="OstorClientService"
+            DisplayName="Ostor Client Service"
+            Description="Ostor Client Service"
+            Start="auto"
+            Account="LocalSystem"
+            ErrorControl="ignore"
+            Interactive="no"
+            Arguments="/start OstorClientService"
+              >
+        
+        <ServiceDependency Id=""/>
+        <ServiceDependency Id=""/>
+        <ServiceDependency Id=""/>
+        
+      </ServiceInstall>
+      <ServiceControl Id="StartService" Name="OstorClientService" Start="install" Stop="uninstall" Remove="uninstall" Wait="no" /> -->
+      </Component>
+
+      <Component Id="OStorSecureConnectConfig" Guid="a0567c24-da1f-45a4-b872-3ff0f06cd72e" Win64='yes'>
+        <File Id="OStorSecureConnectConfig" Name="OStorSecureConnect.exe.config" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+
+      <Component Id="SendGrid.dll" Guid="efa51d90-8047-4245-98df-2fdfb1e26d4f" Win64='yes'>
+        <File Id="SendGrid.dll" Name="SendGrid.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+
+      <Component Id="AWSSDK.CORE.dll" Guid="97d0428c-7c70-44f9-b0e0-d085d35908df" Win64='yes'>
+        <File Id="AWSSDK.CORE.dll" Name="AWSSDK.CORE.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+
+      <Component Id="AWSSDK.S3.dll" Guid="ea272508-a3cd-4090-8c46-c4e898924276" Win64='yes'>
+        <File Id="AWSSDK.S3.dll" Name="AWSSDK.S3.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+
+      <Component Id="BouncyCastle.Crypto.dll" Guid="558016a4-a5d7-489e-8e7f-c2e7f43d65d8" Win64='yes'>
+        <File Id="BouncyCastle.Crypto.dll" Name="BouncyCastle.Crypto.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="Box.V2.dll" Guid="4b084e34-536d-4ec7-8aed-bd172daa3a48" Win64='yes'>
+        <File Id="Box.V2.dll" Name="Box.V2.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="DnsClient.dll" Guid="2d449531-1250-423c-aa87-f6ab7bbb136a" Win64='yes'>
+        <File Id="DnsClient.dll" Name="DnsClient.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+
+      <Component Id="Dropbox.Api.dll" Guid="327db067-a628-4736-af43-fc5bc61c0470" Win64='yes'>
+        <File Id="Dropbox.Api.dll" Name="Dropbox.Api.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+
+      <Component Id="Flurl.dll" Guid="9b5c5c35-6f05-4f5d-a8bf-2ccb706cf0a2" Win64='yes'>
+        <File Id="Flurl.dll" Name="Flurl.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="Flurl.Http.dll" Guid="12d1303c-9076-4310-b3b9-56f01f291a9b" Win64='yes'>
+        <File Id="Flurl.Http.dll" Name="Flurl.Http.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+
+
+      <Component Id="Google.Apis.Auth.dll" Guid="11fe0f8a-3b48-4d94-8111-4003b7f8c425" Win64='yes'>
+        <File Id="Google.Apis.Auth.dll" Name="Google.Apis.Auth.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+
+      <Component Id="Google.Apis.Core.dll" Guid="9a33b1d8-918f-418e-bd07-d096d61d9d4b" Win64='yes'>
+        <File Id="Google.Apis.Core.dll" Name="Google.Apis.Core.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+
+      <Component Id="Google.Apis.dll" Guid="39ad6fe0-ffc4-4474-a6a3-605df181e214" Win64='yes'>
+        <File Id="Google.Apis.dll" Name="Google.Apis.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+
+      <Component Id="Google.Apis.Drive.v3.dll" Guid="cc97afd5-59a0-422b-8b1a-b674a2281fe4" Win64='yes'>
+        <File Id="Google.Apis.Drive.v3" Name="Google.Apis.Drive.v3.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+
+      <Component Id="IKVM.AWT.WinForms.dll" Guid="6228a11a-4e3b-471a-9f72-e6a83076ac29" Win64='yes'>
+        <File Id="IKVM.AWT.WinForms.dll" Name="IKVM.AWT.WinForms.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="IKVM.OpenJDK.Beans.dll" Guid="5966b18b-5db9-4c70-af12-8909588fb732" Win64='yes'>
+        <File Id="IKVM.OpenJDK.Beans.dll" Name="IKVM.OpenJDK.Beans.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="IKVM.OpenJDK.Charsets.dll" Guid="d17526e8-ca38-4d4e-82f5-5f0e00a750f7" Win64='yes'>
+        <File Id="IKVM.OpenJDK.Charsets.dll" Name="IKVM.OpenJDK.Charsets.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="IKVM.OpenJDK.Corba.dll" Guid="845c2fdd-5c2f-4954-882f-a3d713186dc8" Win64='yes'>
+        <File Id="IKVM.OpenJDK.Corba.dll" Name="IKVM.OpenJDK.Corba.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="IKVM.OpenJDK.Core.dll" Guid="acb5ec17-83a8-4400-9cb2-edaeabded8ee" Win64='yes'>
+        <File Id="IKVM.OpenJDK.Core.dll" Name="IKVM.OpenJDK.Core.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="IKVM.OpenJDK.Jdbc.dll" Guid="05265edc-a754-46b9-b93c-b4af0feb37e2" Win64='yes'>
+        <File Id="IKVM.OpenJDK.Jdbc.dll" Name="IKVM.OpenJDK.Jdbc.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="IKVM.OpenJDK.Management.dll" Guid="693e1ef5-8cc2-4134-ace7-be73e1f4bdb9" Win64='yes'>
+        <File Id="IKVM.OpenJDK.Management.dll" Name="IKVM.OpenJDK.Management.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="IKVM.OpenJDK.Media.dll" Guid="ef3594f8-955f-42ff-9de4-e17fead97021" Win64='yes'>
+        <File Id="IKVM.OpenJDK.Media.dll" Name="IKVM.OpenJDK.Media.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="IKVM.OpenJDK.Misc.dll" Guid="54e0b29b-9041-4244-80fb-c654c913839c" Win64='yes'>
+        <File Id="IKVM.OpenJDK.Misc.dll" Name="IKVM.OpenJDK.Misc.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="IKVM.OpenJDK.Naming.dll" Guid="fb343110-f137-4d50-86c9-e93cf9066e6b" Win64='yes'>
+        <File Id="IKVM.OpenJDK.Naming.dll" Name="IKVM.OpenJDK.Naming.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="IKVM.OpenJDK.Remoting.dll" Guid="70930d87-7e8d-4621-b622-df1bee16805c" Win64='yes'>
+        <File Id="IKVM.OpenJDK.Remoting.dll" Name="IKVM.OpenJDK.Remoting.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="IKVM.OpenJDK.Security.dll" Guid="870ca45e-5812-4fb2-9113-d93bad903a1d" Win64='yes'>
+        <File Id="IKVM.OpenJDK.Security.dll" Name="IKVM.OpenJDK.Security.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="IKVM.OpenJDK.SwingAWT.dll" Guid="fae005a7-b552-4be5-87cc-24a6c338f35e" Win64='yes'>
+        <File Id="IKVM.OpenJDK.SwingAWT.dll" Name="IKVM.OpenJDK.SwingAWT.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="IKVM.OpenJDK.Text.dll" Guid="3e3b5922-6ade-47b5-a524-e271ccf8d6a4" Win64='yes'>
+        <File Id="IKVM.OpenJDK.Text.dll" Name="IKVM.OpenJDK.Text.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="IKVM.OpenJDK.Util.dll" Guid="6a807fde-7123-4901-8587-ee2379b6fc27" Win64='yes'>
+        <File Id="IKVM.OpenJDK.Util.dll" Name="IKVM.OpenJDK.Util.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="IKVM.OpenJDK.XML.API.dll" Guid="1cb9e043-ba70-42f0-bbd1-7de23ff56497" Win64='yes'>
+        <File Id="IKVM.OpenJDK.XML.API.dll" Name="IKVM.OpenJDK.XML.API.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="IKVM.OpenJDK.XML.Bind.dll" Guid="e6dc707c-eebc-4996-a965-588eb01d8c6f" Win64='yes'>
+        <File Id="IKVM.OpenJDK.XML.Bind.dll" Name="IKVM.OpenJDK.XML.Bind.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="IKVM.OpenJDK.XML.Parse.dll" Guid="5084fc49-b746-499b-b815-fd9962577bd0" Win64='yes'>
+        <File Id="IKVM.OpenJDK.XML.Parse.dll" Name="IKVM.OpenJDK.XML.Parse.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="IKVM.Runtime.dll" Guid="c0495e0a-69ec-4260-89c2-7fda998eaea6" Win64='yes'>
+        <File Id="IKVM.Runtime.dll" Name="IKVM.Runtime.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="IKVM.Runtime.JNI.dll" Guid="61d84d3d-a6c1-4b21-b859-6f57be09f72a" Win64='yes'>
+        <File Id="IKVM.Runtime.JNI.dll" Name="IKVM.Runtime.JNI.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="Lucene.Net.dll" Guid="b82a976e-69db-4f59-9a9e-e498571be2a8" Win64='yes'>
+        <File Id="Lucene.Net.dll" Name="Lucene.Net.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+
+      <Component Id="Marvin.JsonPatch.dll" Guid="d0927b25-7b03-4859-8fe2-4a47e0826b28" Win64='yes'>
+        <File Id="Marvin.JsonPatch.dll" Name="Marvin.JsonPatch.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="MediaToolkit.dll" Guid="b55d9264-30df-4727-98fa-2d9571f1ac63" Win64='yes'>
+        <File Id="MediaToolkit.dll" Name="MediaToolkit.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="Microsoft.Azure.KeyVault.Core.dll" Guid="3864a85b-12f5-4f07-8d4e-8404e317b8d4" Win64='yes'>
+        <File Id="Microsoft.Azure.KeyVault.Core.dll" Name="Microsoft.Azure.KeyVault.Core.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+
+      <Component Id="Microsoft.Diagnostics.Tracing.EventSource.dll" Guid="598ce70c-09ef-4628-8b16-4705bdd9b999" Win64='yes'>
+        <File Id="Microsoft.Diagnostics.Tracing.EventSource.dll" Name="Microsoft.Diagnostics.Tracing.EventSource.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+
+      <Component Id="Microsoft.IdentityModel.Logging.dll" Guid="13147002-ef82-42cd-a165-ba084b86af04" Win64='yes'>
+        <File Id="Microsoft.IdentityModel.Logging.dll" Name="Microsoft.IdentityModel.Logging.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+
+      <Component Id="Microsoft.IdentityModel.Tokens.dll" Guid="e102a72a-3a31-440d-a072-9ccf234f0533" Win64='yes'>
+        <File Id="Microsoft.IdentityModel.Tokens.dll" Name="Microsoft.IdentityModel.Tokens.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+
+      <Component Id="Microsoft.WindowsAPICodePack.dll" Guid="d80a6dc1-44f0-4645-89d5-c5a7e5770b80" Win64='yes'>
+        <File Id="Microsoft.WindowsAPICodePack.dll" Name="Microsoft.WindowsAPICodePack.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="Microsoft.WindowsAPICodePack.Shell.dll" Guid="85e7a2e0-66af-412e-a33e-407ebbfed0b4" Win64='yes'>
+        <File Id="Microsoft.WindowsAPICodePack.Shell.dll" Name="Microsoft.WindowsAPICodePack.Shell.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="Microsoft.WindowsAzure.Storage.dll" Guid="2f1ce9ff-7cbb-4816-ac4a-99206db2f44a" Win64='yes'>
+        <File Id="Microsoft.WindowsAzure.Storage.dll" Name="Microsoft.WindowsAzure.Storage.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+
+      <Component Id="MimeKit.dll" Guid="c932ae16-975d-485b-ae21-ecb096b13119" Win64='yes'>
+        <File Id="MimeKit.dll" Name="MimeKit.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+
+      <Component Id="MongoDB.Bson.dll" Guid="d667c40f-fd23-424e-8312-02eec0b36e5b" Win64='yes'>
+        <File Id="MongoDB.Bson.dll" Name="MongoDB.Bson.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+
+      <Component Id="MongoDB.Driver.Core.dll" Guid="0d1eadf5-1424-492e-b505-cddbbc6b640e" Win64='yes'>
+        <File Id="MongoDB.Driver.Core.dll" Name="MongoDB.Driver.Core.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+
+      <Component Id="MongoDB.Driver.dll" Guid="328836dd-7854-437e-ba04-d637924cb4b9" Win64='yes'>
+        <File Id="MongoDB.Driver.dll" Name="MongoDB.Driver.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+
+      <Component Id="Newtonsoft.Json.dll" Guid="4213d2fc-1f89-44df-a162-2d7e361c0766" Win64='yes'>
+        <File Id="Newtonsoft.Json.dll" Name="Newtonsoft.Json.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+
+      <Component Id="openstacknet.dll" Guid="43e5726c-1ffa-478e-9c6e-b6e7d0736809" Win64='yes'>
+        <File Id="openstacknet.dll" Name="openstacknet.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+
+      <Component Id="RabbitMQ.Client.dll" Guid="45e75613-439e-4ad6-9a75-78431c3537b3" Win64='yes'>
+        <File Id="RabbitMQ.Client.dll" Name="RabbitMQ.Client.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+
+      <!--<Component Id="ServiceURLData.json" Guid="fae40bd1-2c25-4d28-8b74-298524d806e5" Win64='yes'>
+        <File Id="ServiceURLData.json" Name="ServiceURLData.json" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>-->
+      <Component Id="System.Data.SQLite.dll" Guid="bc751b35-5174-4616-896a-5d8a19fd9fb5" Win64='yes'>
+        <File Id="System.Data.SQLite.dll" Name="System.Data.SQLite.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="System.IdentityModel.Tokens.Jwt.dll" Guid="bf38e5e2-4a3f-4d06-add8-14ec2a7cc3bb" Win64='yes'>
+        <File Id="System.IdentityModel.Tokens.Jwt.dll" Name="System.IdentityModel.Tokens.Jwt.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+
+      <Component Id="System.Net.Http.dll" Guid="1e0a8184-3b71-4199-8ee2-10ecb6505e73" Win64='yes'>
+        <File Id="System.Net.Http.dll" Name="System.Net.Http.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="System.Security.Cryptography.Algorithms.dll" Guid="50945bbe-ae98-4e2d-96ec-9f3e70e9255a" Win64='yes'>
+        <File Id="System.Security.Cryptography.Algorithms.dll" Name="System.Security.Cryptography.Algorithms.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="System.Security.Cryptography.Encoding.dll" Guid="21cf6567-2aec-4f70-83c6-8d2d8f7220d1" Win64='yes'>
+        <File Id="System.Security.Cryptography.Encoding.dll" Name="System.Security.Cryptography.Encoding.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="System.Security.Cryptography.Primitives.dll" Guid="7fafa3ba-0194-4a8d-b30c-c7c42e7ef973" Win64='yes'>
+        <File Id="System.Security.Cryptography.Primitives.dll" Name="System.Security.Cryptography.Primitives.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="System.Security.Cryptography.X509Certificates.dll" Guid="fdf0c281-4527-4820-8597-fe1c594bf78d" Win64='yes'>
+        <File Id="System.Security.Cryptography.X509Certificates.dll" Name="System.Security.Cryptography.X509Certificates.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="tikaapp.dll" Guid="bcf4d6c9-5b43-4ab3-917a-6dedba5c590c" Win64='yes'>
+        <File Id="tikaapp.dll" Name="tika-app-1.5.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="websocketsharp.dll" Guid="7bf12d6a-0d93-42f1-8547-ed40d493cf32" Win64='yes'>
+        <File Id="websocketsharp.dll" Name="websocket-sharp.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+
+      <Component Id="Ziroh.Local.DeviceLibrary.dll" Guid="4149e315-621e-40ce-becd-5adbae1cbb4a" Win64='yes'>
+        <File Id="Ziroh.Local.DeviceLibrary.dll" Name="Ziroh.Local.DeviceLibrary.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\Service\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+
+    </ComponentGroup>
+
+    <ComponentGroup Id="OStorUI" Directory="OStorUI">
+      <Component Id="apimswincoreconsolel110.dll" Guid="b2bc0660-852f-40a7-9d74-a7b78484070e" Win64='yes'>
+        <File Id="apimswincoreconsolel110.dll" Name="api-ms-win-core-console-l1-1-0.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="apimswincoredatetimel110.dll" Guid="33b30e17-79c2-4a1b-90df-33c31bd62e54" Win64='yes'>
+        <File Id="apimswincoredatetimel110.dll" Name="api-ms-win-core-datetime-l1-1-0.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="apimswincoredebugl110.dll" Guid="1067d506-a87d-4722-bbf1-35ae92afe4d3" Win64='yes'>
+        <File Id="apimswincoredebugl110.dll" Name="api-ms-win-core-debug-l1-1-0.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="apimswincoreerrorhandlingl110.dll" Guid="186c08ff-2cf7-45f3-ae2a-deb8aedce583" Win64='yes'>
+        <File Id="apimswincoreerrorhandlingl110.dll" Name="api-ms-win-core-errorhandling-l1-1-0.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="apimswincorefilel110.dll" Guid="6fefb8ff-cc58-4dec-84dc-059975fcdf9f" Win64='yes'>
+        <File Id="apimswincorefilel110.dll" Name="api-ms-win-core-file-l1-1-0.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="apimswincorefilel120.dll" Guid="bcf495d4-7719-40c3-9452-e76a10b33c98" Win64='yes'>
+        <File Id="apimswincorefilel120.dll" Name="api-ms-win-core-file-l1-2-0.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="apimswincorefilel210.dll" Guid="cf5ae21d-fa57-4b12-9ae1-65a8d440923a" Win64='yes'>
+        <File Id="apimswincorefilel210.dll" Name="api-ms-win-core-file-l2-1-0.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="apimswincorehandlel110.dll" Guid="8b759a44-010e-4f77-b3d7-8b55d90b0c25" Win64='yes'>
+        <File Id="apimswincorehandlel110.dll" Name="api-ms-win-core-handle-l1-1-0.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="apimswincoreheapl110.dll" Guid="c1c101c9-cf8e-4721-a559-60fb83d997b5" Win64='yes'>
+        <File Id="apimswincoreheapl110.dll" Name="api-ms-win-core-heap-l1-1-0.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="apimswincoreinterlockedl110.dll" Guid="3451dcdd-3238-4fb1-a648-973cf3f7609d" Win64='yes'>
+        <File Id="apimswincoreinterlockedl110.dll" Name="api-ms-win-core-interlocked-l1-1-0.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="apimswincorelibraryloaderl110.dll" Guid="34aa0b87-747d-4187-b463-0b242fc68eff" Win64='yes'>
+        <File Id="apimswincorelibraryloaderl110.dll" Name="api-ms-win-core-libraryloader-l1-1-0.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="apimswincorelocalizationl120.dll" Guid="402a1f68-1040-47fa-af27-208315716501" Win64='yes'>
+        <File Id="apimswincorelocalizationl120.dll" Name="api-ms-win-core-localization-l1-2-0.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="apimswincorememoryl110.dll" Guid="23bbe61b-84cd-4121-9e03-2b4afcc4630c" Win64='yes'>
+        <File Id="apimswincorememoryl110.dll" Name="api-ms-win-core-memory-l1-1-0.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="apimswincorenamedpipel110.dll" Guid="15f01469-00fe-44a5-81dd-9fbe096af267" Win64='yes'>
+        <File Id="apimswincorenamedpipel110.dll" Name="api-ms-win-core-namedpipe-l1-1-0.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="apimswincoreprocessenvironmentl110.dll" Guid="49f9f812-ffb7-4d21-abff-6ffaa6511342" Win64='yes'>
+        <File Id="apimswincoreprocessenvironmentl110.dll" Name="api-ms-win-core-processenvironment-l1-1-0.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="apimswincoreprocessthreadsl110.dll" Guid="a9b18f2d-c1c9-49b1-97c0-b9c4fb496833" Win64='yes'>
+        <File Id="apimswincoreprocessthreadsl110.dll" Name="api-ms-win-core-processthreads-l1-1-0.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="apimswincoreprocessthreadsl111.dll" Guid="766c008e-3096-4524-9512-8d2e3e1934b3" Win64='yes'>
+        <File Id="apimswincoreprocessthreadsl111.dll" Name="api-ms-win-core-processthreads-l1-1-1.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="apimswincoreprofilel110.dll" Guid="9b2ef5b8-bfdf-41ac-8638-8e08b8e774ce" Win64='yes'>
+        <File Id="apimswincoreprofilel110.dll" Name="api-ms-win-core-profile-l1-1-0.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="apimswincorertlsupportl110.dll" Guid="62ab6433-98b8-4307-b9eb-c8216e5885ec" Win64='yes'>
+        <File Id="apimswincorertlsupportl110.dll" Name="api-ms-win-core-rtlsupport-l1-1-0.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="apimswincorestringl110.dll" Guid="928cd700-223d-4915-a62b-f5f1b8929515" Win64='yes'>
+        <File Id="apimswincorestringl110.dll" Name="api-ms-win-core-string-l1-1-0.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="apimswincoresynchl110.dll" Guid="dca971e2-8212-4328-9572-7c0da0cd8b9b" Win64='yes'>
+        <File Id="apimswincoresynchl110.dll" Name="api-ms-win-core-synch-l1-1-0.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="apimswincoresynchl120.dll" Guid="5f55377f-8514-44b8-a990-de8183258afb" Win64='yes'>
+        <File Id="apimswincoresynchl120.dll" Name="api-ms-win-core-synch-l1-2-0.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="apimswincoresysinfol110.dll" Guid="c72aaef3-dbc0-43ae-bb2e-682462230450" Win64='yes'>
+        <File Id="apimswincoresysinfol110.dll" Name="api-ms-win-core-sysinfo-l1-1-0.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="apimswincoretimezonel110.dll" Guid="e49f6ec3-3b54-4280-9b63-8f2dd3ea7a0d" Win64='yes'>
+        <File Id="apimswincoretimezonel110.dll" Name="api-ms-win-core-timezone-l1-1-0.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="apimswincoreutill110.dll" Guid="f1a4e9e1-7198-4d55-98eb-a336fa352e09" Win64='yes'>
+        <File Id="apimswincoreutill110.dll" Name="api-ms-win-core-util-l1-1-0.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="apimswincrtconiol110.dll" Guid="c8bd0511-e782-4fcb-b6b0-1da84db401a4" Win64='yes'>
+        <File Id="apimswincrtconiol110.dll" Name="api-ms-win-crt-conio-l1-1-0.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="apimswincrtconvertl110.dll" Guid="2724ee2e-3fe3-40d9-9d99-bddf1556d8c8" Win64='yes'>
+        <File Id="apimswincrtconvertl110.dll" Name="api-ms-win-crt-convert-l1-1-0.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="apimswincrtenvironmentl110.dll" Guid="1ae370bf-a33c-4f61-afc7-486569acf863" Win64='yes'>
+        <File Id="apimswincrtenvironmentl110.dll" Name="api-ms-win-crt-environment-l1-1-0.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="apimswincrtfilesysteml110.dll" Guid="9eee89d4-4d1d-4ecc-8902-b80232fa478c" Win64='yes'>
+        <File Id="apimswincrtfilesysteml110.dll" Name="api-ms-win-crt-filesystem-l1-1-0.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="apimswincrtheapl110.dll" Guid="e60dcdfb-9ed9-44d0-91f0-d3e2a511877d" Win64='yes'>
+        <File Id="apimswincrtheapl110.dll" Name="api-ms-win-crt-heap-l1-1-0.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="apimswincrtlocalel110.dll" Guid="0cef797c-d0c1-4a1a-8733-7018d0dfae52" Win64='yes'>
+        <File Id="apimswincrtlocalel110.dll" Name="api-ms-win-crt-locale-l1-1-0.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="apimswincrtmathl110.dll" Guid="2da388c8-4846-4308-bcc8-e7a55dbcdfb4" Win64='yes'>
+        <File Id="apimswincrtmathl110.dll" Name="api-ms-win-crt-math-l1-1-0.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="apimswincrtmultibytel110.dll" Guid="48f6e035-4b50-4fed-9d73-7f5841782f40" Win64='yes'>
+        <File Id="apimswincrtmultibytel110.dll" Name="api-ms-win-crt-multibyte-l1-1-0.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="apimswincrtprivatel110.dll" Guid="ab231b1a-b4a2-478e-82f8-2717ec6a2d30" Win64='yes'>
+        <File Id="apimswincrtprivatel110.dll" Name="api-ms-win-crt-private-l1-1-0.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="apimswincrtprocessl110.dll" Guid="de262662-23a0-4564-a07d-949b7de16f05" Win64='yes'>
+        <File Id="apimswincrtprocessl110.dll" Name="api-ms-win-crt-process-l1-1-0.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="apimswincrtruntimel110.dll" Guid="b01a5248-10ba-424b-a10d-05010ba03d0c" Win64='yes'>
+        <File Id="apimswincrtruntimel110.dll" Name="api-ms-win-crt-runtime-l1-1-0.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="apimswincrtstdiol110.dll" Guid="418b0141-09c2-42a6-878b-424132ee598e" Win64='yes'>
+        <File Id="apimswincrtstdiol110.dll" Name="api-ms-win-crt-stdio-l1-1-0.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="apimswincrtstringl110.dll" Guid="ff8d97d1-75de-4d4b-ac9e-aa0c5811cf2f" Win64='yes'>
+        <File Id="apimswincrtstringl110.dll" Name="api-ms-win-crt-string-l1-1-0.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="apimswincrttimel110.dll" Guid="52956c66-70f1-4c1a-9064-1bea3a5a9fdc" Win64='yes'>
+        <File Id="apimswincrttimel110.dll" Name="api-ms-win-crt-time-l1-1-0.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="apimswincrtutilityl110.dll" Guid="969725fe-1a53-47d3-a1f5-8c267c18532b" Win64='yes'>
+        <File Id="apimswincrtutilityl110.dll" Name="api-ms-win-crt-utility-l1-1-0.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="blinkimageresources200percent.pak" Guid="11477960-c435-41b4-a624-004f63ac2e6a" Win64='yes'>
+        <File Id="blinkimageresources200percent.pak" Name="blink_image_resources_200_percent.pak" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="contentresources200percent.pak" Guid="c55157b5-0469-49c8-b66d-4fdd2e6cb9fa" Win64='yes'>
+        <File Id="contentresources200percent.pak" Name="content_resources_200_percent.pak" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="contentshell.pak" Guid="4cf4cc71-9bcf-4c44-b9b8-33db771c0a77" Win64='yes'>
+        <File Id="contentshell.pak" Name="content_shell.pak" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="d3dcompiler47.dll" Guid="7cdd4b6b-5009-4c70-8928-548dd9a56a7f" Win64='yes'>
+        <File Id="d3dcompiler47.dll" Name="d3dcompiler_47.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="ffmpeg.dll" Guid="c42c3e4b-17bb-45dc-aaa5-a8167b804163" Win64='yes'>
+        <File Id="ffmpeg.dll" Name="ffmpeg.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="icudtl.dat" Guid="2fa708be-e31a-49bf-95a7-102cf5faec0d" Win64='yes'>
+        <File Id="icudtl.dat" Name="icudtl.dat" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="libEGL.dll" Guid="c2973d31-865f-446d-b19a-1fed7e4fc8f5" Win64='yes'>
+        <File Id="libEGL.dll" Name="libEGL.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="libGLESv2.dll" Guid="a0fa8db9-8227-4339-a839-ed2ad6b13d89" Win64='yes'>
+        <File Id="libGLESv2.dll" Name="libGLESv2.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="LICENSE.File" Guid="bc564aef-5a8e-4ced-9f5a-4c7d324addee" Win64='yes'>
+        <File Id="LICENSE.File" Name="LICENSE" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="LICENSES.chromium.html" Guid="e9b9ff88-4f00-4448-a71f-44a5941f2f69" Win64='yes'>
+        <File Id="LICENSES.chromium.html" Name="LICENSES.chromium.html" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="nativesblob.bin" Guid="8537d661-1444-4e9b-b743-90fae8cc13c4" Win64='yes'>
+        <File Id="nativesblob.bin" Name="natives_blob.bin" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="node.dll" Guid="993c98b1-dcd0-4f56-b0f2-0378bb2f0487" Win64='yes'>
+        <File Id="node.dll" Name="node.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="ostor.exe" Guid="c05d2efd-4ec4-4691-9191-259d5450725a" Win64='yes'>
+        <File Id="ostor.exe" Name="ostor.exe" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64">
+          <Shortcut Id="OstorProgramMenuShortcut" Directory="OstorProgramMenuDir" Name="ostor"
+             WorkingDirectory='OstorUI' Icon="ostor.exe" IconIndex="0" Advertise="yes" />
+          <Shortcut Id="OstorDesktopShortcut" Directory="DesktopFolder" Name="ostor"
+             WorkingDirectory='OstorUI' Icon="ostor.exe" IconIndex="0" Advertise="yes" />
+        </File>
+      </Component>
+      <Component Id="pdfviewerresources.pak" Guid="19eb7978-91b1-4c97-b4ca-20f4c41cf5c9" Win64='yes'>
+        <File Id="pdfviewerresources.pak" Name="pdf_viewer_resources.pak" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="snapshotblob.bin" Guid="461134fd-de5f-4008-942a-3d08dce6a11c" Win64='yes'>
+        <File Id="snapshotblob.bin" Name="snapshot_blob.bin" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="ucrtbase.dll" Guid="6bdfc781-4d74-44be-8e1c-8f4fa5066c21" Win64='yes'>
+        <File Id="ucrtbase.dll" Name="ucrtbase.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="uiresources200percent.pak" Guid="e5cddaf7-9b87-4862-ba5c-325e05d7489d" Win64='yes'>
+        <File Id="uiresources200percent.pak" Name="ui_resources_200_percent.pak" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="vcruntime140.dll" Guid="baedc4fb-9a50-44e1-95a9-fac84f88cf5f" Win64='yes'>
+        <File Id="vcruntime140.dll" Name="vcruntime140.dll" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="version.File" Guid="02066670-8140-4e7a-967a-f8b7ae8d0bfb" Win64='yes'>
+        <File Id="version.File" Name="version" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="viewsresources200percent.pak" Guid="7baf3fc2-67f0-4aa0-b205-83d98b8b3622" Win64='yes'>
+        <File Id="viewsresources200percent.pak" Name="views_resources_200_percent.pak" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+
+    </ComponentGroup>
+
+    <ComponentGroup Id="UIresources" Directory="Resources">
+      <Component Id="app.asar" Guid="6f36ee1c-2e51-4773-8706-6abf9cebefe6" Win64='yes'>
+        <File Id="app.asar" Name="app.asar" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\resources\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+      <Component Id="electron.asar" Guid="021e0e41-b806-4c1e-8ce9-6452ab7a9c0a" Win64='yes'>
+        <File Id="electron.asar" Name="electron.asar" Source="C:\pranjal\Binaries\Ziroh\OStor\OStorUI\resources\" KeyPath="yes" ProcessorArchitecture="x64"/>
+      </Component>
+    </ComponentGroup>
+
+  </Fragment>
+</Wix>
